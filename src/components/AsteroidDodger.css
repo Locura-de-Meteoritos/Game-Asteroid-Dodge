@@ -446,14 +446,256 @@
   }
 }
 
-@keyframes status-light {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 15px #51cf66;
+/* Overlay para modales */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+/* Modal de inicio */
+.start-modal {
+  background: linear-gradient(135deg, #1a2a42, #0c1a2e);
+  border: 3px solid #51cf66;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 0 50px rgba(81, 207, 102, 0.5);
+  animation: modalAppear 0.5s ease-out;
+}
+
+.start-modal h1 {
+  font-size: 2.5rem;
+  color: #51cf66;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px #51cf66;
+}
+
+.start-modal h2 {
+  font-size: 1.3rem;
+  color: #74c0fc;
+  margin-bottom: 30px;
+}
+
+.mission-info {
+  text-align: left;
+  margin: 30px 0;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 1px solid #495057;
+}
+
+.mission-info p {
+  margin: 10px 0;
+  color: #ced4da;
+  font-size: 1rem;
+}
+
+.nasa-stats {
+  background: rgba(81, 207, 102, 0.1);
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 1px solid #51cf66;
+}
+
+.nasa-stats p {
+  margin: 5px 0;
+  color: #51cf66;
+  font-weight: bold;
+}
+
+.start-mission-button {
+  background: linear-gradient(45deg, #51cf66, #40c057);
+  border: none;
+  padding: 20px 40px;
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 15px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(81, 207, 102, 0.4);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.start-mission-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(81, 207, 102, 0.6);
+}
+
+/* Modal de game over */
+.gameover-modal {
+  background: linear-gradient(135deg, #2e1a1a, #1a0c0c);
+  border: 3px solid #ff6b6b;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 450px;
+  box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
+  animation: modalAppear 0.5s ease-out;
+}
+
+.gameover-modal h2 {
+  font-size: 2.5rem;
+  color: #ff6b6b;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px #ff6b6b;
+}
+
+.final-stats {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 25px;
+  border-radius: 15px;
+  margin: 25px 0;
+  border: 1px solid #495057;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.stat-label {
+  color: #adb5bd;
+  font-size: 1.1rem;
+}
+
+.stat-value {
+  color: #ffd43b;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.restart-button {
+  background: linear-gradient(45deg, #51cf66, #40c057);
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(81, 207, 102, 0.4);
+  font-family: 'Courier New', monospace;
+}
+
+.restart-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(81, 207, 102, 0.6);
+}
+
+/* Modal de pausa */
+.pause-modal {
+  background: linear-gradient(135deg, #2a2a1a, #1a1a0c);
+  border: 3px solid #ffd43b;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 350px;
+  box-shadow: 0 0 50px rgba(255, 212, 59, 0.5);
+  animation: modalAppear 0.5s ease-out;
+}
+
+.pause-modal h2 {
+  font-size: 2rem;
+  color: #ffd43b;
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px #ffd43b;
+}
+
+.resume-button {
+  background: linear-gradient(45deg, #ffd43b, #fab005);
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.3rem;
+  color: #000;
+  cursor: pointer;
+  border-radius: 10px;
+  margin: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(255, 212, 59, 0.4);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.resume-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 212, 59, 0.6);
+}
+
+.menu-button {
+  background: linear-gradient(45deg, #74c0fc, #339af0);
+  border: none;
+  padding: 12px 25px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(116, 192, 252, 0.3);
+  font-family: 'Courier New', monospace;
+}
+
+.menu-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(116, 192, 252, 0.5);
+}
+
+@keyframes modalAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-50px);
   }
-  50% {
-    opacity: 0.6;
-    box-shadow: 0 0 25px #51cf66, 0 0 35px #51cf66;
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive para modales */
+@media (max-width: 768px) {
+  .start-modal, .gameover-modal, .pause-modal {
+    margin: 20px;
+    padding: 30px 20px;
+    max-width: 90%;
+  }
+  
+  .start-modal h1 {
+    font-size: 2rem;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .mission-info {
+    padding: 15px;
   }
 }
 
