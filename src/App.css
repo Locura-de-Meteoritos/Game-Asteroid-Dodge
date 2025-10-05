@@ -1,0 +1,232 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #0c1a2e, #1a2a42);
+  color: white;
+  overflow-x: hidden;
+}
+
+.app-main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 20px;
+  border: 2px solid #51cf66;
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 30px rgba(81, 207, 102, 0.3);
+}
+
+.header h1 {
+  font-size: 3rem;
+  color: #51cf66;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 20px #51cf66;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.header h2 {
+  font-size: 1.3rem;
+  color: #74c0fc;
+  margin: 0;
+  font-weight: normal;
+}
+
+.mission-control {
+  display: flex;
+  gap: 40px;
+  max-width: 1200px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mission-card {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #495057;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mission-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(81, 207, 102, 0.2);
+}
+
+.mission-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.mission-card h3 {
+  color: #ffd43b;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px #ffd43b;
+}
+
+.mission-card p {
+  color: #ced4da;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.launch-button {
+  background: linear-gradient(45deg, #51cf66, #40c057);
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.3rem;
+  color: white;
+  cursor: pointer;
+  border-radius: 10px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(81, 207, 102, 0.4);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.launch-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(81, 207, 102, 0.6);
+  animation: button-glow 0.5s ease-in-out;
+}
+
+.info-panel {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #74c0fc;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 350px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.info-panel h4 {
+  color: #74c0fc;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #74c0fc;
+}
+
+.info-panel ul {
+  list-style: none;
+  padding: 0;
+}
+
+.info-panel li {
+  color: #adb5bd;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  padding-left: 25px;
+  position: relative;
+}
+
+.info-panel li::before {
+  content: '▶';
+  position: absolute;
+  left: 0;
+  color: #51cf66;
+}
+
+.nasa-footer {
+  margin-top: auto;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    text-shadow: 0 0 20px #51cf66, 0 0 30px #51cf66;
+  }
+  50% {
+    text-shadow: 0 0 30px #51cf66, 0 0 40px #51cf66, 0 0 50px #51cf66;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes button-glow {
+  0%, 100% {
+    box-shadow: 0 8px 25px rgba(81, 207, 102, 0.6);
+  }
+  50% {
+    box-shadow: 0 12px 35px rgba(81, 207, 102, 0.8);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .header h2 {
+    font-size: 1rem;
+  }
+  
+  .mission-control {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .mission-card, .info-panel {
+    max-width: 90%;
+    padding: 20px;
+  }
+  
+  .mission-icon {
+    font-size: 3rem;
+  }
+  
+  .launch-button {
+    font-size: 1.1rem;
+    padding: 12px 25px;
+  }
+}
+
+/* Background effects */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="white" opacity="0.3"/><circle cx="80" cy="40" r="0.5" fill="white" opacity="0.5"/><circle cx="60" cy="80" r="1.5" fill="white" opacity="0.2"/><circle cx="30" cy="60" r="0.8" fill="white" opacity="0.4"/><circle cx="90" cy="10" r="0.3" fill="white" opacity="0.6"/></svg>') repeat;
+  z-index: -1;
+  animation: stars-move 100s linear infinite;
+}
+
+@keyframes stars-move {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
