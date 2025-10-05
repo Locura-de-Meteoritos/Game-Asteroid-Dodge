@@ -1,8 +1,20 @@
 {
-  "name": "packaje",
+  "name": "asteroid-dodger-3d",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "A thrilling 3D space survival game powered by real NASA asteroid data",
+  "keywords": ["game", "3d", "space", "nasa", "asteroids", "react", "threejs", "webgl"],
+  "author": "Locura-de-Meteoritos",
+  "license": "MIT",
+  "homepage": "https://github.com/Locura-de-Meteoritos/Game-Asteroid-Dodge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Locura-de-Meteoritos/Game-Asteroid-Dodge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Locura-de-Meteoritos/Game-Asteroid-Dodge/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
