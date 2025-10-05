@@ -12,9 +12,11 @@
     const [lives, setLives] = useState(3);
     const [speed, setSpeed] = useState(1);
     const [asteroidsDodged, setAsteroidsDodged] = useState(0);
-    const [asteroidInfo, setAsteroidInfo] = useState(null);
+    const [asteroidInfoList, setAsteroidInfoList] = useState([]);
     const [dangerWarning, setDangerWarning] = useState(false);
     const [nasaAsteroids, setNasaAsteroids] = useState([]);
+    const [collisionAsteroid, setCollisionAsteroid] = useState(null); // Asteroide que causó Game Over
+    const [selectedAsteroid, setSelectedAsteroid] = useState(null); // Asteroide actualmente seleccionado para el panel persistente
 
     // Referencias del juego
     const sceneRef = useRef(null);
@@ -40,7 +42,7 @@
     };
 
     useEffect(() => {
-    // Cargar datos de asteroides de NASA al inicio
+    // Load NASA asteroid data at startup
     fetchNasaAsteroids();
 
     // Inicializar el juego directamente
@@ -80,7 +82,7 @@
     }
     }, [gameState]);
 
-    // Función para obtener datos reales de asteroides de NASA
+    // Function to get real asteroid data from NASA
     const fetchNasaAsteroids = async () => {
     try {
         const API_KEY = "4XTNhkIbujuES0LnRkxyO5v5HI96OqklU3ELcEDB";
@@ -123,9 +125,37 @@
         console.log(`Cargados ${asteroids.length} asteroides de NASA`);
         }
     } catch (error) {
-        console.error("Error al obtener datos de NASA:", error);
-        // Usar datos por defecto si falla la API
+        console.error("Error getting NASA data:", error);
+        // Use default data if API fails
     }
+    };
+
+    // Función para agregar información de asteroide con desvanecimiento automático
+    const addAsteroidNotification = (asteroidData) => {
+        const notification = {
+            id: Date.now() + Math.random(),
+            data: asteroidData,
+            timestamp: Date.now()
+        };
+
+        setAsteroidInfoList(prev => {
+            const newList = [...prev, notification]; // Agregar al final para mantener orden FIFO
+            
+            // Si excedemos 4 notificaciones, remover las más antiguas
+            if (newList.length > 4) {
+                return newList.slice(-4); // Mantener solo las últimas 4
+            }
+            return newList;
+        });
+
+        // Schedule removal after 8 seconds (FIFO - First In, First Out)
+        setTimeout(() => {
+            setAsteroidInfoList(prev => {
+                // Remover la notificación más antigua si aún existe
+                const filtered = prev.filter(item => item.id !== notification.id);
+                return filtered;
+            });
+        }, 8000);
     };
 
     const initGame = () => {
@@ -267,7 +297,7 @@
     const createAsteroid = () => {
     if (asteroidsRef.current.length >= gameConfig.maxAsteroids) return;
 
-    // Usar datos reales de NASA si están disponibles
+    // Use real NASA data if available
     let asteroidData;
 
     if (nasaAsteroids.length > 0) {
@@ -277,7 +307,7 @@
 
         asteroidData = {
         name: nasaAsteroid.name.replace(/[()]/g, ""),
-        size: Math.max(5, Math.min(30, nasaAsteroid.diameter / 10)), // Escalar para el juego
+        size: Math.max(5, Math.min(30, nasaAsteroid.diameter / 10)), // Scale for game
         dangerous: nasaAsteroid.dangerous,
         velocity: Math.max(2, Math.min(8, nasaAsteroid.velocity)),
         realData: {
@@ -288,7 +318,7 @@
         },
         };
     } else {
-        // Fallback a datos simulados
+        // Fallback to simulated data
         const types = [
         { name: "C-type", dangerous: false, size: [5, 15] },
         { name: "S-type", dangerous: false, size: [10, 20] },
@@ -314,7 +344,7 @@
     // Determinar color basado en tipo
     let color;
     if (asteroidData.dangerous) {
-        color = 0xff4444; // Rojo para peligrosos
+        color = 0xff4444; // Red for dangerous ones
     } else if (asteroidData.size > 20) {
         color = 0x999999; // Gris claro para grandes
     } else if (asteroidData.size > 15) {
@@ -354,7 +384,7 @@
 
     const mesh = new THREE.Mesh(geometry, material);
 
-    // Posición y velocidad inicial
+    // Initial position and velocity
     mesh.position.set(
         (Math.random() - 0.5) * 120,
         (Math.random() - 0.5) * 80,
@@ -379,7 +409,7 @@
         realData: asteroidData.realData,
     };
 
-    // Glow para asteroides peligrosos
+    // Glow for dangerous asteroids
     if (asteroidData.dangerous) {
         const glowGeometry = new THREE.DodecahedronGeometry(
         asteroidData.size * 1.3,
@@ -436,7 +466,7 @@
     velocity.x *= gameConfig.friction;
     velocity.y *= gameConfig.friction;
 
-    // Limitar velocidad máxima
+    // Limit maximum speed
     velocity.x = Math.max(
         -gameConfig.maxVelocity,
         Math.min(gameConfig.maxVelocity, velocity.x)
@@ -483,7 +513,7 @@
         asteroid.mesh.rotation.y += asteroid.rotation.y;
         asteroid.mesh.rotation.z += asteroid.rotation.z;
 
-        // Animar glow para asteroides peligrosos
+        // Animate glow for dangerous asteroids
         if (asteroid.glowMesh) {
         asteroid.glowMesh.userData.glowPhase += 0.1;
         const glowIntensity =
@@ -491,19 +521,31 @@
         asteroid.glowMesh.material.opacity = glowIntensity;
         }
 
-        // Calcular distancia para información y advertencias
+        // Calculate distance for information and warnings
         const dx = asteroid.mesh.position.x - camera.position.x;
         const dy = asteroid.mesh.position.y - camera.position.y;
         const dz = asteroid.mesh.position.z - camera.position.z;
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-        // Encontrar asteroide más cercano para mostrar información
-        if (distance < 100 && distance < minDistance) {
+        // Find closest asteroid for persistent panel
+        if (distance < 150 && distance < minDistance) {
         minDistance = distance;
         nearestAsteroid = {
             ...asteroid,
             distance: distance.toFixed(1),
         };
+        }
+
+        // Send notification for very close asteroids
+        if (distance < 50 && !asteroid.notificationSent) {
+        // Mark that notification was sent for this asteroid
+        asteroid.notificationSent = true;
+        
+        // Add notification
+        addAsteroidNotification({
+            ...asteroid,
+            distance: distance.toFixed(1),
+        });
         }
 
         // Verificar si hay peligro cercano
@@ -520,16 +562,18 @@
         sceneRef.current.remove(asteroid.mesh);
         asteroidsRef.current.splice(i, 1);
 
-        // Bonificación por esquivar asteroides peligrosos
+        // Bonus for dodging dangerous asteroids
         const points = asteroid.dangerous ? 250 : 100;
         setScore((prev) => prev + points);
         setAsteroidsDodged((prev) => prev + 1);
         }
     }
 
-    // Actualizar información del asteroide cercano
-    setAsteroidInfo(nearestAsteroid);
+    // Update danger warnings
     setDangerWarning(hasDanger);
+    
+    // Update persistent panel with nearest asteroid
+    setSelectedAsteroid(nearestAsteroid);
     };
 
     const updateStars = () => {
@@ -561,19 +605,21 @@
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
         if (distance < asteroid.size + gameConfig.collisionRadius) {
-        // Colisión detectada
+        // Collision detected
         sceneRef.current.remove(asteroid.mesh);
         asteroidsRef.current.splice(i, 1);
 
         setLives((prev) => {
             const newLives = prev - 1;
             if (newLives <= 0) {
+            // Save asteroid information that caused Game Over
+            setCollisionAsteroid(asteroid);
             gameOver();
             }
             return newLives;
         });
 
-        // Efecto visual de impacto
+        // Visual impact effect
         createCollisionEffect(asteroid.mesh.position);
         }
     }
@@ -647,7 +693,7 @@
     const gameTime =
         (currentTime - (gameRef.current?.startTime || currentTime)) / 1000;
 
-    // Aumentar velocidad gradualmente
+    // Increase speed gradually
     const newSpeed = 1 + gameTime / 30 + asteroidsDodged * 0.02;
     setSpeed(newSpeed);
 
@@ -677,12 +723,14 @@
     setLives(3);
     setSpeed(1);
     setAsteroidsDodged(0);
-    setAsteroidInfo(null);
+    setAsteroidInfoList([]);
+    setSelectedAsteroid(null);
     setDangerWarning(false);
+    setCollisionAsteroid(null); // Limpiar asteroide de colisión
     setShowStartModal(false);
     setShowGameOverModal(false);
 
-    // Reiniciar configuración del juego
+    // Reset game configuration
     gameConfig.maxAsteroids = 20;
     gameConfig.spawnRate = 1000;
 
@@ -691,7 +739,7 @@
     };
 
     const restartGame = () => {
-    // Limpiar asteroides existentes
+    // Clean existing asteroids
     asteroidsRef.current.forEach((asteroid) => {
         if (sceneRef.current) {
         sceneRef.current.remove(asteroid.mesh);
@@ -756,7 +804,7 @@
             <div className="hud">
                 <div className="hud-top-left">
                 <div className="score">SCORE: {score.toLocaleString()}</div>
-                <div className="dodged">ESQUIVADOS: {asteroidsDodged}</div>
+                <div className="dodged">DODGED: {asteroidsDodged}</div>
                 </div>
 
                 <div className="hud-top-right">
@@ -778,7 +826,7 @@
                 </div>
 
                 <div className="hud-bottom">
-                <div className="speed">VELOCIDAD: {speed.toFixed(1)}x</div>
+                <div className="speed">SPEED: {speed.toFixed(1)}x</div>
 
                 {/* Radar de proximidad */}
                 <div className="proximity-radar">
@@ -831,44 +879,80 @@
                 </div>
                 </div>
 
-                {/* Información del asteroide cercano */}
-                {asteroidInfo && (
-                <div className="asteroid-info">
-                    <h4>🪨 {asteroidInfo.name}</h4>
-                    {asteroidInfo.realData ? (
+            {/* Persistent asteroid information panel */}
+            {selectedAsteroid && gameState === "PLAYING" && (
+                <div className="persistent-asteroid-panel">
+                <h4>🎯 NEAREST ASTEROID</h4>
+                <div className="persistent-asteroid-info">
+                    <p><strong>Name:</strong> {selectedAsteroid.name}</p>
+                    {selectedAsteroid.realData ? (
                     <>
-                        <p>Designación: {asteroidInfo.realData.designation}</p>
-                        <p>
-                        Diámetro Real: {asteroidInfo.realData.realDiameter}m
-                        </p>
-                        <p>
-                        Velocidad: {asteroidInfo.realData.realVelocity} km/s
-                        </p>
-                        <p>
-                        Distancia: {asteroidInfo.realData.distance} millones km
-                        </p>
-                        {asteroidInfo.dangerous && (
-                        <p className="danger-text">
-                            ⚠️ POTENCIALMENTE PELIGROSO
-                        </p>
+                        <p><strong>Designation:</strong> {selectedAsteroid.realData.designation}</p>
+                        <p><strong>Diameter:</strong> {selectedAsteroid.realData.realDiameter}m</p>
+                        <p><strong>Velocity:</strong> {selectedAsteroid.realData.realVelocity} km/s</p>
+                        <p><strong>Distance:</strong> {selectedAsteroid.realData.distance}M km</p>
+                    </>
+                    ) : (
+                    <>
+                        <p><strong>Diameter:</strong> {selectedAsteroid.size ? selectedAsteroid.size.toFixed(1) : 'N/A'}m</p>
+                        <p><strong>Type:</strong> {selectedAsteroid.dangerous ? 'Dangerous' : 'Safe'}</p>
+                    </>
+                    )}
+                    <p><strong>Distance:</strong> {selectedAsteroid.distance}km</p>
+                    {selectedAsteroid.dangerous && (
+                    <p className="danger-text">⚠️ POTENTIALLY HAZARDOUS</p>
+                    )}
+                </div>
+                </div>
+            )}
+
+            {/* Asteroid notifications list */}
+            <div className="asteroid-notifications">
+                {asteroidInfoList.map((notification, index) => (
+                <div 
+                    key={notification.id} 
+                    className="asteroid-notification"
+                    style={{ 
+                        top: `${index * 160}px`,
+                        zIndex: 150 - index,
+                        animationDelay: `${index * 0.1}s`
+                    }}
+                >
+                    <h4>🪨 {notification.data.name}</h4>
+                    {notification.data.realData ? (
+                    <>
+                        <p><strong>Designation:</strong> {notification.data.realData.designation}</p>
+                        <p><strong>Diameter:</strong> {notification.data.realData.realDiameter}m</p>
+                        <p><strong>Velocity:</strong> {notification.data.realData.realVelocity} km/s</p>
+                        <p><strong>Distance:</strong> {notification.data.realData.distance}M km</p>
+                        {notification.data.dangerous && (
+                        <p className="danger-text">⚠️ POTENTIALLY HAZARDOUS</p>
                         )}
                     </>
                     ) : (
                     <>
-                        <p>Diámetro: {asteroidInfo.size.toFixed(1)}m</p>
-                        <p>Distancia: {asteroidInfo.distance}km</p>
-                        {asteroidInfo.dangerous && (
-                        <p className="danger-text">⚠️ PELIGROSO</p>
+                        <p><strong>Diameter:</strong> {notification.data.size.toFixed(1)}m</p>
+                        <p><strong>Distance:</strong> {notification.data.distance}km</p>
+                        {notification.data.dangerous && (
+                        <p className="danger-text">⚠️ DANGEROUS</p>
                         )}
                     </>
                     )}
+                    <div className="notification-timer">
+                    <div 
+                        className="timer-bar" 
+                        style={{ 
+                        animation: 'timerDecrease 8s linear forwards',
+                        animationDelay: `${index * 0.1}s`
+                        }}
+                    ></div>
+                    </div>
                 </div>
-                )}
-
-                {/* Advertencia de peligro */}
+                ))}
+            </div>                {/* Danger warning */}
                 {dangerWarning && (
                 <div className="danger-warning">
-                    ⚠️ ASTEROIDE PELIGROSO DETECTADO ⚠️
+                    ⚠️ DANGEROUS ASTEROID DETECTED ⚠️
                 </div>
                 )}
             </div>
@@ -883,10 +967,10 @@
             <h2>SIMULADOR NASA - ASTEROIDES NEO</h2>
             <div className="mission-info">
                 <p>
-                🌌 <strong>MISIÓN:</strong> Esquiva asteroides del mundo real
+                🌌 <strong>MISSION:</strong> Dodge real-world asteroids
                 </p>
                 <p>
-                🛰️ <strong>DATOS:</strong> API en tiempo real de NASA
+                � <strong>DATA:</strong> Real-time NASA API
                 </p>
                 <p>
                 🎮 <strong>CONTROLES:</strong> WASD o flechas del teclado
@@ -899,7 +983,7 @@
             <div className="nasa-stats">
                 <p>📊 Asteroides cargados: {nasaAsteroids.length}</p>
                 <p>
-                ⚠️ Peligrosos: {nasaAsteroids.filter((a) => a.dangerous).length}
+                ⚠️ Dangerous: {nasaAsteroids.filter((a) => a.dangerous).length}
                 </p>
             </div>
             <button onClick={startGame} className="start-mission-button">
@@ -909,47 +993,77 @@
         </div>
         )}
 
-        {/* Modal de game over */}
+        {/* Game over modal */}
         {showGameOverModal && (
         <div className="modal-overlay">
             <div className="gameover-modal">
-            <h2>💥 MISIÓN COMPLETADA</h2>
+            <h2>💥 MISSION COMPLETED</h2>
+            
+            {/* Collision asteroid information */}
+            {collisionAsteroid && (
+                <div className="collision-info">
+                <h3>🪨 Impact Asteroid</h3>
+                <div className="asteroid-details">
+                    <p><strong>Name:</strong> {collisionAsteroid.name}</p>
+                    {collisionAsteroid.realData ? (
+                    <>
+                        <p><strong>Designation:</strong> {collisionAsteroid.realData.designation}</p>
+                        <p><strong>Diameter:</strong> {collisionAsteroid.realData.realDiameter}m</p>
+                        <p><strong>Velocity:</strong> {collisionAsteroid.realData.realVelocity} km/s</p>
+                        <p><strong>Real Distance:</strong> {collisionAsteroid.realData.distance}M km</p>
+                        {collisionAsteroid.dangerous && (
+                        <p className="danger-text">⚠️ POTENTIALLY HAZARDOUS ASTEROID</p>
+                        )}
+                    </>
+                    ) : (
+                    <>
+                        <p><strong>Size:</strong> {collisionAsteroid.size ? collisionAsteroid.size.toFixed(1) : 'N/A'}m</p>
+                        <p><strong>Type:</strong> Simulated asteroid</p>
+                        {collisionAsteroid.dangerous && (
+                        <p className="danger-text">⚠️ DANGEROUS ASTEROID</p>
+                        )}
+                    </>
+                    )}
+                </div>
+                </div>
+            )}
+            
             <div className="final-stats">
                 <div className="stat-item">
-                <span className="stat-label">Puntuación Final:</span>
+                <span className="stat-label">Final Score:</span>
                 <span className="stat-value">{score.toLocaleString()}</span>
                 </div>
                 <div className="stat-item">
-                <span className="stat-label">Asteroides Esquivados:</span>
+                <span className="stat-label">Asteroids Dodged:</span>
                 <span className="stat-value">{asteroidsDodged}</span>
                 </div>
                 <div className="stat-item">
-                <span className="stat-label">Velocidad Máxima:</span>
+                <span className="stat-label">Max Speed:</span>
                 <span className="stat-value">{speed.toFixed(1)}x</span>
                 </div>
             </div>
             <div className="modal-buttons">
                 <button onClick={restartGame} className="restart-button">
-                🔄 NUEVA MISIÓN
+                🔄 NEW MISSION
                 </button>
                 <button onClick={backToMenu} className="menu-button">
-                📋 MENÚ PRINCIPAL
+                📋 MAIN MENU
                 </button>
             </div>
             </div>
         </div>
         )}
 
-        {/* Pantalla de pausa */}
+        {/* Pause screen */}
         {gameState === "PAUSED" && (
         <div className="modal-overlay">
             <div className="pause-modal">
-            <h2>⏸️ MISIÓN PAUSADA</h2>
+            <h2>⏸️ MISSION PAUSED</h2>
             <button onClick={togglePause} className="resume-button">
-                ▶️ REANUDAR
+                ▶️ RESUME
             </button>
             <button onClick={backToMenu} className="menu-button">
-                📋 MENÚ PRINCIPAL
+                📋 MAIN MENU
             </button>
             </div>
         </div>
